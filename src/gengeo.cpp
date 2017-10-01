@@ -2,8 +2,14 @@
 #include <fstream>
 #include <iostream>
 #include <limits>
+#include <cmath>
 
 namespace gengeo {
+
+static const float PI = 3.1415926535f;
+static const float TWOPI = 2 * PI;
+static const float PI2 = PI * 0.5f;
+static const float PI4 = PI * 0.25f;
 
 Geometry cube()
 {
@@ -70,6 +76,32 @@ Geometry sphere(int subdivs)
 		// geo.positions[i] = normalize(pos); // simple normalization
 		geo.normals[i] = normalize(pos);
 	}
+	return geo;
+}
+
+Geometry circley(int points)
+{
+	if (points < 3)
+		points = 3;
+	int total = points + 1;
+	Geometry geo;
+	geo.positions.reserve(total);
+	geo.texcoords.reserve(total);
+	geo.normals.reserve(total);
+	geo.triangles.reserve(points);
+	geo.positions.emplace_back(0, 0, 0);
+	geo.texcoords.emplace_back(0.5f, 0.5f);
+	float angleStep = TWOPI / points;
+	for (int i = 0; i < points; i++) {
+		geo.triangles.emplace_back(0, ((i+1) % points) + 1, i+1);
+		float x = std::cos(i * angleStep);
+		float y = std::sin(i * angleStep);
+		float u = (x + 1) * 0.5f;
+		float v = 1.0f - ((y + 1) * 0.5f);
+		geo.positions.emplace_back(x, 0, y);
+		geo.texcoords.emplace_back(u, v);
+	}
+	geo.normals.assign(total, {0, 1, 0});
 	return geo;
 }
 

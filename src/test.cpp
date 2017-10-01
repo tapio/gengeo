@@ -20,5 +20,8 @@ int main(int argc, char* argv[])
 	center(geo);
 	writeObj(geo, "test.obj");
 
+	Geometry circle = circley();
+	writeObj(circle, "circle.obj");
+	
 	return 0;
 }

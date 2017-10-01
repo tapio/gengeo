@@ -134,6 +134,8 @@ Geometry cube();
 inline Geometry box(vec3 size) { auto c = cube(); return scale(c, size); }
 // Unit sphere
 Geometry sphere(int subdivs = 4);
+// Unit circle
+Geometry circley(int points = 16);
 // "Planes" are unit squares, with normal pointing to positive
 Geometry planexy();
 Geometry planexz();
