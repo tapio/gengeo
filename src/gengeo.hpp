@@ -147,6 +147,7 @@ inline Geometry planez() { return planexy(); }
 Geometry& subdivide(Geometry& geo, int amount = 1);
 Geometry& triangulate(Geometry& geo);
 Geometry& normalizeNormals(Geometry& geo);
+Geometry& flipNormals(Geometry& geo);
 
 bool writeObj(const Geometry& geo, const char* filename = "out.obj");
 

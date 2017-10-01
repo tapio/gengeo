@@ -23,5 +23,9 @@ int main(int argc, char* argv[])
 	Geometry circle = circley();
 	writeObj(circle, "circle.obj");
 	
+	Geometry b = box({2, 2, 1});
+	flipNormals(b);
+	writeObj(b, "flippedcube.obj");
+	
 	return 0;
 }

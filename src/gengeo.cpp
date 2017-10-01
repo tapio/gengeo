@@ -272,6 +272,14 @@ Geometry& normalizeNormals(Geometry& geo)
 	return geo;
 }
 
+Geometry& flipNormals(Geometry& geo)
+{
+	// TODO: Should probably flip face winding too
+	for (auto& n : geo.normals)
+		n = -n;
+	return geo;
+}
+
 bool writeObj(const Geometry& geo, const char* filename)
 {
 	std::ofstream f;
