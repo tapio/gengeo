@@ -111,18 +111,6 @@ struct Geometry
 	std::vector<vec3> normals;
 };
 
-// Unit cube
-Geometry cube();
-// Unit sphere
-Geometry sphere(int subdivs = 4);
-// "Planes" are unit squares, with normal pointing to positive
-Geometry planexy();
-Geometry planexz();
-Geometry planeyz();
-inline Geometry planex() { return planeyz(); }
-inline Geometry planey() { return planexz(); }
-inline Geometry planez() { return planexy(); }
-
 vec3 extents(const Geometry& geo);
 void bounds(const Geometry& geo, vec3& lower, vec3& upper);
 
@@ -139,6 +127,20 @@ inline Geometry& mirrorz(Geometry& geo) { return scalez(geo, -1); }
 inline Geometry& translatex(Geometry& geo, float x) { return translate(geo, {x, 0, 0}); }
 inline Geometry& translatey(Geometry& geo, float y) { return translate(geo, {0, y, 0}); }
 inline Geometry& translatez(Geometry& geo, float z) { return translate(geo, {0, 0, z}); }
+
+// Unit cube
+Geometry cube();
+// Sized box
+inline Geometry box(vec3 size) { auto c = cube(); return scale(c, size); }
+// Unit sphere
+Geometry sphere(int subdivs = 4);
+// "Planes" are unit squares, with normal pointing to positive
+Geometry planexy();
+Geometry planexz();
+Geometry planeyz();
+inline Geometry planex() { return planeyz(); }
+inline Geometry planey() { return planexz(); }
+inline Geometry planez() { return planexy(); }
 
 Geometry& subdivide(Geometry& geo, int amount = 1);
 Geometry& triangulate(Geometry& geo);
