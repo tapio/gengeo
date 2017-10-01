@@ -119,6 +119,9 @@ Geometry sphere(int subdivs = 4);
 Geometry planexy();
 Geometry planexz();
 Geometry planeyz();
+inline Geometry planex() { return planeyz(); }
+inline Geometry planey() { return planexz(); }
+inline Geometry planez() { return planexy(); }
 
 vec3 extents(const Geometry& geo);
 void bounds(const Geometry& geo, vec3& lower, vec3& upper);
