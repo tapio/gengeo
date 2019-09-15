@@ -16,6 +16,7 @@ struct vec2
 		struct { float x, y; };
 		struct { float r, g; };
 		struct { float s, t; };
+		float v[2];
 	};
 
 	constexpr vec2(float v = 0.f): x(v), y(v) {}
@@ -36,6 +37,7 @@ struct vec2
 	constexpr vec2& operator/=(float rhs) { x /= rhs; y /= rhs; return *this; }
 
 	constexpr vec2& operator-() { x = -x; y = -y; return *this; }
+	constexpr float operator[](int index) { return v[index]; }
 };
 
 struct vec3
@@ -44,6 +46,7 @@ struct vec3
 		struct { float x, y, z; };
 		struct { float r, g, b; };
 		struct { float s, t, p; };
+		float v[3];
 	};
 
 	constexpr vec3(float v = 0.f): x(v), y(v), z(v) {}
@@ -64,6 +67,7 @@ struct vec3
 	constexpr vec3& operator/=(float rhs) { x /= rhs; y /= rhs; z /= rhs; return *this; }
 
 	constexpr vec3& operator-() { x = -x; y = -y; z = -z; return *this; }
+	constexpr float operator[](int index) { return v[index]; }
 };
 
 inline constexpr float dot(const vec2& lhs, const vec2& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y; }
