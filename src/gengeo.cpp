@@ -8,8 +8,8 @@ namespace gengeo {
 
 static constexpr float PI = 3.1415926535f;
 static constexpr float TWOPI = 2 * PI;
-static constexpr float PI2 = PI * 0.5f;
-static constexpr float PI4 = PI * 0.25f;
+//static constexpr float PI2 = PI * 0.5f;
+//static constexpr float PI4 = PI * 0.25f;
 
 Geometry cube()
 {
@@ -324,5 +324,29 @@ bool writeObj(const Geometry& geo, const char* filename)
 
 	return true;
 }
+
+
+VoxelGrid& box(VoxelGrid& voxelGrid, vec3 start, vec3 end, VoxelGrid::cell_t cell)
+{
+	voxelGrid.visit([cell](int x, int y, int z) {
+		return cell;
+	});
+	return voxelGrid;
+}
+
+// TODO: This is super quick and dirty, no internal face removal
+Geometry polygonize(const VoxelGrid& voxelGrid)
+{
+	Geometry geo;
+	Geometry voxel = cube();
+	voxelGrid.visit([&](int x, int y, int z, VoxelGrid::cell_t cell) {
+		if (!cell)
+			return;
+		translate(center(voxel), vec3(x, y, z));
+		concat(geo, voxel);
+	});
+	return geo;
+}
+
 
 } // namespace gengeo

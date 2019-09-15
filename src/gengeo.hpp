@@ -152,4 +152,62 @@ Geometry& flipNormals(Geometry& geo);
 bool writeObj(const Geometry& geo, const char* filename = "out.obj");
 
 
+struct VoxelGrid
+{
+	typedef unsigned char cell_t;
+
+	VoxelGrid(int w, int d, int h): width(w), depth(d), height(h) {
+		cells.resize(w * d * h);
+	}
+
+	constexpr cell_t get(int x, int y, int z) const { return cells[cellIndex(x, y, z)]; }
+	constexpr void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
+	constexpr cell_t get(vec3 pos) const { return get(pos.x, pos.y, pos.z); }
+	constexpr void set(vec3 pos, const cell_t& cell) { set(pos.x, pos.y, pos.z, cell); }
+	constexpr int cellIndex(int x, int y, int z) const { return (z * width * depth) + (y * width) + x; }
+
+	template<typename VisitFunc>
+	constexpr void visit(VisitFunc visitFunc) const {
+		for (int k = 0; k < height; ++k) {
+			for (int j = 0; j < depth; ++j) {
+				for (int i = 0; i < width; ++i) {
+					visitFunc(i, j, k, get(i, j, k));
+				}
+			}
+		}
+	}
+
+	template<typename VisitFunc>
+	constexpr void visit(VisitFunc visitFunc) {
+		for (int k = 0; k < height; ++k) {
+			for (int j = 0; j < depth; ++j) {
+				for (int i = 0; i < width; ++i) {
+					set(i, j, k, visitFunc(i, j, k));
+				}
+			}
+		}
+	}
+
+	template<typename VisitFunc>
+	constexpr void visit(vec3 start, vec3 end, VisitFunc visitFunc) {
+		for (int k = start.z; k < end.z; ++k) {
+			for (int j = start.y; j < end.y; ++j) {
+				for (int i = start.x; i < end.x; ++i) {
+					set(i, j, k, visitFunc(i, j, k));
+				}
+			}
+		}
+	}
+
+	int width = 0;
+	int depth = 0;
+	int height = 0;
+
+	std::vector<cell_t> cells;
+};
+
+VoxelGrid& box(VoxelGrid& voxelGrid, vec3 start, vec3 end, VoxelGrid::cell_t cell = 1);
+Geometry polygonize(const VoxelGrid& voxelGrid);
+
+
 } // namespace gengeo

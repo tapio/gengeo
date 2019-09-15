@@ -27,5 +27,12 @@ int main(int argc, char* argv[])
 	flipNormals(b);
 	writeObj(b, "flippedcube.obj");
 	
+	const int s = 16;
+	const int m = 4;
+	VoxelGrid voxels(s, s, s);
+	box(voxels, {m, m, m}, {s-m, s-m, s-m});
+	Geometry voxelized = polygonize(voxels);
+	writeObj(voxelized, "voxels.obj");
+
 	return 0;
 }
