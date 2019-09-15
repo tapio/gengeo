@@ -21,12 +21,12 @@ struct vec2
 	constexpr vec2(float v = 0.f): x(v), y(v) {}
 	constexpr vec2(float x_, float y_): x(x_), y(y_) {}
 
-	constexpr vec2 operator+(const vec2& rhs) const { return vec2(x + rhs.x, y + rhs.y); }
-	constexpr vec2 operator-(const vec2& rhs) const { return vec2(x - rhs.x, y - rhs.y); }
-	constexpr vec2 operator*(const vec2& rhs) const { return vec2(x * rhs.x, y * rhs.y); }
-	constexpr vec2 operator/(const vec2& rhs) const { return vec2(x / rhs.x, y / rhs.y); }
-	constexpr vec2 operator*(float rhs) const { return vec2(x * rhs, y * rhs); }
-	constexpr vec2 operator/(float rhs) const { return vec2(x / rhs, y / rhs); }
+	constexpr vec2 operator+(const vec2& rhs) const { return { x + rhs.x, y + rhs.y }; }
+	constexpr vec2 operator-(const vec2& rhs) const { return { x - rhs.x, y - rhs.y }; }
+	constexpr vec2 operator*(const vec2& rhs) const { return { x * rhs.x, y * rhs.y }; }
+	constexpr vec2 operator/(const vec2& rhs) const { return { x / rhs.x, y / rhs.y }; }
+	constexpr vec2 operator*(float rhs) const { return { x * rhs, y * rhs }; }
+	constexpr vec2 operator/(float rhs) const { return { x / rhs, y / rhs }; }
 
 	constexpr vec2& operator+=(const vec2& rhs) { x += rhs.x; y += rhs.y; return *this; }
 	constexpr vec2& operator-=(const vec2& rhs) { x -= rhs.x; y -= rhs.y; return *this; }
@@ -49,12 +49,12 @@ struct vec3
 	constexpr vec3(float v = 0.f): x(v), y(v), z(v) {}
 	constexpr vec3(float x_, float y_, float z_): x(x_), y(y_), z(z_) {}
 
-	constexpr vec3 operator+(const vec3& rhs) const { return vec3(x + rhs.x, y + rhs.y, z + rhs.z); }
-	constexpr vec3 operator-(const vec3& rhs) const { return vec3(x - rhs.x, y - rhs.y, z - rhs.z); }
-	constexpr vec3 operator*(const vec3& rhs) const { return vec3(x * rhs.x, y * rhs.y, z * rhs.z); }
-	constexpr vec3 operator/(const vec3& rhs) const { return vec3(x / rhs.x, y / rhs.y, z / rhs.z); }
-	constexpr vec3 operator*(float rhs) const { return vec3(x * rhs, y * rhs, z * rhs); }
-	constexpr vec3 operator/(float rhs) const { return vec3(x / rhs, y / rhs, z / rhs); }
+	constexpr vec3 operator+(const vec3& rhs) const { return { x + rhs.x, y + rhs.y, z + rhs.z }; }
+	constexpr vec3 operator-(const vec3& rhs) const { return { x - rhs.x, y - rhs.y, z - rhs.z }; }
+	constexpr vec3 operator*(const vec3& rhs) const { return { x * rhs.x, y * rhs.y, z * rhs.z }; }
+	constexpr vec3 operator/(const vec3& rhs) const { return { x / rhs.x, y / rhs.y, z / rhs.z }; }
+	constexpr vec3 operator*(float rhs) const { return { x * rhs, y * rhs, z * rhs }; }
+	constexpr vec3 operator/(float rhs) const { return { x / rhs, y / rhs, z / rhs }; }
 
 	constexpr vec3& operator+=(const vec3& rhs) { x += rhs.x; y += rhs.y; z += rhs.z; return *this; }
 	constexpr vec3& operator-=(const vec3& rhs) { x -= rhs.x; y -= rhs.y; z -= rhs.z; return *this; }
@@ -68,24 +68,24 @@ struct vec3
 
 inline constexpr float dot(const vec2& lhs, const vec2& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y; }
 inline constexpr float length2(const vec2& v) { return dot(v, v); }
-inline float length(const vec2& v) { return std::sqrt(length2(v)); }
+inline           float length(const vec2& v) { return std::sqrt(length2(v)); }
 inline constexpr float distance2(const vec2& lhs, const vec2& rhs) { return length2(rhs - lhs); }
-inline float distance(const vec2& lhs, const vec2& rhs) { return length(rhs - lhs); }
-inline vec2 normalize(const vec2& v) { float l = 1.f / length(v); return v * l; }
-inline constexpr vec2 abs(const vec2& v) { return vec2(abs(v.x), abs(v.y)); }
-inline constexpr vec2 min(const vec2& lhs, const vec2& rhs) { return vec2(min(lhs.x, rhs.x), min(lhs.y, rhs.y)); }
-inline constexpr vec2 max(const vec2& lhs, const vec2& rhs) { return vec2(max(lhs.x, rhs.x), max(lhs.y, rhs.y)); }
+inline           float distance(const vec2& lhs, const vec2& rhs) { return length(rhs - lhs); }
+inline           vec2 normalize(const vec2& v) { float l = 1.f / length(v); return v * l; }
+inline constexpr vec2 abs(const vec2& v) { return { abs(v.x), abs(v.y) }; }
+inline constexpr vec2 min(const vec2& lhs, const vec2& rhs) { return { min(lhs.x, rhs.x), min(lhs.y, rhs.y) }; }
+inline constexpr vec2 max(const vec2& lhs, const vec2& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y) }; }
 
-inline constexpr vec3 cross(const vec3& lhs, const vec3& rhs) { return vec3(lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x); }
+inline constexpr vec3 cross(const vec3& lhs, const vec3& rhs) { return { lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x }; }
 inline constexpr float dot(const vec3& lhs, const vec3& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
 inline constexpr float length2(const vec3& v) { return dot(v, v); }
-inline float length(const vec3& v) { return std::sqrt(length2(v)); }
+inline           float length(const vec3& v) { return std::sqrt(length2(v)); }
 inline constexpr float distance2(const vec3& lhs, const vec3& rhs) { return length2(rhs - lhs); }
-inline float distance(const vec3& lhs, const vec3& rhs) { return length(rhs - lhs); }
-inline vec3 normalize(const vec3& v) { float l = 1.f / length(v); return v * l; }
-inline constexpr vec3 abs(const vec3& v) { return vec3(abs(v.x), abs(v.y), abs(v.z)); }
-inline constexpr vec3 min(const vec3& lhs, const vec3& rhs) { return vec3(min(lhs.x, rhs.x), min(lhs.y, rhs.y), min(lhs.z, rhs.z)); }
-inline constexpr vec3 max(const vec3& lhs, const vec3& rhs) { return vec3(max(lhs.x, rhs.x), max(lhs.y, rhs.y), max(lhs.z, rhs.z)); }
+inline           float distance(const vec3& lhs, const vec3& rhs) { return length(rhs - lhs); }
+inline           vec3 normalize(const vec3& v) { float l = 1.f / length(v); return v * l; }
+inline constexpr vec3 abs(const vec3& v) { return { abs(v.x), abs(v.y), abs(v.z) }; }
+inline constexpr vec3 min(const vec3& lhs, const vec3& rhs) { return { min(lhs.x, rhs.x), min(lhs.y, rhs.y), min(lhs.z, rhs.z) }; }
+inline constexpr vec3 max(const vec3& lhs, const vec3& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y), max(lhs.z, rhs.z) }; }
 
 
 struct TriFace
