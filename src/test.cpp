@@ -1,4 +1,5 @@
 #include "gengeo.hpp"
+#include "../FastNoise/FastNoise.h"
 
 using namespace gengeo;
 
@@ -27,12 +28,30 @@ int main(int argc, char* argv[])
 	flipNormals(b);
 	writeObj(b, "flippedcube.obj");
 	
-	const int s = 16;
-	const int m = 4;
-	VoxelGrid voxels(s, s, s);
-	box(voxels, {m, m, m}, {s-m, s-m, s-m});
-	Geometry voxelized = polygonize(voxels);
-	writeObj(voxelized, "voxels.obj");
+	{
+		const int s = 16;
+		const int m = 4;
+		VoxelGrid voxels(s, s, s);
+		box(voxels, {m, m, m}, {s-m, s-m, s-m});
+		Geometry voxelized = polygonize(voxels);
+		writeObj(voxelized, "voxels.obj");
+	}
+
+	{
+		FastNoise noise;
+		noise.SetNoiseType(FastNoise::Simplex);
+		noise.SetFrequency(20);
+
+		const int s = 32;
+		VoxelGrid voxels(s, s, s);
+		voxels.visit([&](int x, int y, int z) {
+			const float n = noise.GetNoise(x, y, z);
+			return n > 0 ? 1 : 0;
+		});
+		Geometry voxelized = polygonize(voxels);
+		writeObj(voxelized, "voxelnoise.obj");
+	}
+
 
 	return 0;
 }
