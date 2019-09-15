@@ -6,14 +6,14 @@
 
 namespace gengeo {
 
-static const float PI = 3.1415926535f;
-static const float TWOPI = 2 * PI;
-static const float PI2 = PI * 0.5f;
-static const float PI4 = PI * 0.25f;
+static constexpr float PI = 3.1415926535f;
+static constexpr float TWOPI = 2 * PI;
+static constexpr float PI2 = PI * 0.5f;
+static constexpr float PI4 = PI * 0.25f;
 
 Geometry cube()
 {
-	static const vec3 verts[8] = {
+	static constexpr vec3 verts[8] = {
 		{-0.5f, -0.5f, -0.5f}, // 0
 		{-0.5f,  0.5f, -0.5f}, // 1
 		{ 0.5f,  0.5f, -0.5f}, // 2
@@ -23,7 +23,7 @@ Geometry cube()
 		{ 0.5f,  0.5f,  0.5f}, // 6
 		{ 0.5f, -0.5f,  0.5f}  // 7
 	};
-	static const QuadFace quads[6] = {
+	static constexpr QuadFace quads[6] = {
 		{4, 7, 6, 5}, // front
 		{3, 0, 1, 2}, // back
 		{7, 3, 2, 6}, // right
@@ -31,7 +31,7 @@ Geometry cube()
 		{0, 4, 5, 1}, // left
 		{7, 4, 0, 3}  // bottom
 	};
-	static const vec3 normals[6] = {
+	static constexpr vec3 normals[6] = {
 		{ 0,  0,  1}, // front
 		{ 0,  0, -1}, // back
 		{ 1,  0,  0}, // right
