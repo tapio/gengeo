@@ -2,7 +2,7 @@
 
 ROOT="$(dirname "$(readlink -f "$0")")"
 EXENAME="gengeo"
-CFLAGS="-std=c++11 -O2 -march=native -Wall -Wextra -Wno-unused-parameter"
+CFLAGS="-std=c++14 -O2 -march=native -Wall -Wextra -Wno-unused-parameter"
 
 if [ "x$CXX" = "x" ]; then
 	# Default to GCC
