@@ -4,6 +4,10 @@ ROOT="$(dirname "$(readlink -f "$0")")"
 EXENAME="gengeo"
 CFLAGS="-std=c++14 -O2 -march=native -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 
+if [ x"$(uname -o)" = x"Msys" ]; then
+	EXENAME="$EXENAME.exe"
+fi
+
 if [ "x$CXX" = "x" ]; then
 	# Default to GCC
 	CXX=g++
