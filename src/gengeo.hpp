@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cmath>
+#include <functional>
 
 namespace gengeo {
 
@@ -240,6 +241,10 @@ namespace sdf {
 	}
 
 } // namespace sdf
+
+typedef std::function<float(vec3)> SDFFunction;
+Geometry polygonize(vec3 start, vec3 end, vec3 step, SDFFunction sdf);
+
 
 
 struct VoxelGrid

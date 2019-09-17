@@ -58,5 +58,16 @@ int main(int argc, char* argv[])
 		writeObj(voxelized, "marching.obj");
 	}
 
+	if (true)
+	{
+		const int s = 12;
+		Geometry polygonized = polygonize(vec3(-s), vec3(s), vec3(0.25f), [](vec3 pos) {
+			float b = sdf::box(pos, vec3(s * 0.6f, s * 0.2f, s * 0.5f));
+			float c = sdf::sphere(pos, s * 0.4f);
+			return sdf::opUnion(b, c);
+		});
+		writeObj(polygonized, "sdf.obj");
+	}
+
 	return 0;
 }

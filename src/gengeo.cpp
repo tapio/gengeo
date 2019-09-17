@@ -369,6 +369,84 @@ static constexpr vec3 vertexInterp(float isolevel, vec3 p1, vec3 p2, float valp1
 	};
 }
 
+Geometry polygonize(vec3 start, vec3 end, vec3 step, SDFFunction sdf)
+{
+	static constexpr vec3 offsets[8] = {
+		{-1,  1, -1},
+		{ 1,  1, -1},
+		{ 1, -1, -1},
+		{-1, -1, -1},
+		{-1,  1,  1},
+		{ 1,  1,  1},
+		{ 1, -1,  1},
+		{-1, -1,  1}
+	};
+	Geometry geo;
+	const float isolevel = 0;
+	for (float z = start.z; z < end.z; z += step.z) {
+		for (float y = start.y; y < end.y; y += step.y) {
+			for (float x = start.x; x < end.x; x += step.x) {
+				// Determine the index into the edge table which
+				// tells us which vertices are inside of the surface
+				int cubeindex = 0;
+				float values[8];
+				vec3 points[8];
+				const vec3 p = vec3(x, y, z);
+				for (int i = 0; i < 8; i++) {
+					points[i] = p + offsets[i] * 0.5f;
+					values[i] = sdf(points[i]);
+					if (values[i] < isolevel)
+						cubeindex |= (1 << i);
+				}
+
+				// Cube is entirely in/out of the surface
+				if (EdgeTable[cubeindex] == 0)
+					continue;
+
+				// Find the vertices where the surface intersects the cube
+				vec3 vertlist[12];
+				if (EdgeTable[cubeindex] & 1)
+					vertlist[0] = vertexInterp(isolevel, points[0], points[1], values[0], values[1]);
+				if (EdgeTable[cubeindex] & 2)
+					vertlist[1] = vertexInterp(isolevel, points[1], points[2], values[1], values[2]);
+				if (EdgeTable[cubeindex] & 4)
+					vertlist[2] = vertexInterp(isolevel, points[2], points[3], values[2], values[3]);
+				if (EdgeTable[cubeindex] & 8)
+					vertlist[3] = vertexInterp(isolevel, points[3], points[0], values[3], values[0]);
+				if (EdgeTable[cubeindex] & 16)
+					vertlist[4] = vertexInterp(isolevel, points[4], points[5], values[4], values[5]);
+				if (EdgeTable[cubeindex] & 32)
+					vertlist[5] = vertexInterp(isolevel, points[5], points[6], values[5], values[6]);
+				if (EdgeTable[cubeindex] & 64)
+					vertlist[6] = vertexInterp(isolevel, points[6], points[7], values[6], values[7]);
+				if (EdgeTable[cubeindex] & 128)
+					vertlist[7] = vertexInterp(isolevel, points[7], points[4], values[7], values[4]);
+				if (EdgeTable[cubeindex] & 256)
+					vertlist[8] = vertexInterp(isolevel, points[0], points[4], values[0], values[4]);
+				if (EdgeTable[cubeindex] & 512)
+					vertlist[9] = vertexInterp(isolevel, points[1], points[5], values[1], values[5]);
+				if (EdgeTable[cubeindex] & 1024)
+					vertlist[10] = vertexInterp(isolevel, points[2], points[6], values[2], values[6]);
+				if (EdgeTable[cubeindex] & 2048)
+					vertlist[11] = vertexInterp(isolevel, points[3], points[7], values[3], values[7]);
+
+				// Create the triangle
+				for (int i = 0; TriTable[cubeindex][i] != -1; i += 3) {
+					geo.positions.push_back(vertlist[TriTable[cubeindex][i  ]]);
+					geo.positions.push_back(vertlist[TriTable[cubeindex][i+1]]);
+					geo.positions.push_back(vertlist[TriTable[cubeindex][i+2]]);
+					const int s = geo.positions.size();
+					geo.normals.push_back(vec3(0, 1, 0)); // TODO
+					geo.normals.push_back(vec3(0, 1, 0)); // TODO
+					geo.normals.push_back(vec3(0, 1, 0)); // TODO
+					geo.triangles.emplace_back(s - 3, s - 2, s - 1);
+				}
+			}
+		}
+	}
+	return geo;
+}
+
 Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel)
 {
 	static constexpr vec3 offsets[8] = {
