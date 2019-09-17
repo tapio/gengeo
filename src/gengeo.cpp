@@ -432,13 +432,17 @@ Geometry polygonize(vec3 start, vec3 end, vec3 step, SDFFunction sdf)
 
 				// Create the triangle
 				for (int i = 0; TriTable[cubeindex][i] != -1; i += 3) {
-					geo.positions.push_back(vertlist[TriTable[cubeindex][i  ]]);
-					geo.positions.push_back(vertlist[TriTable[cubeindex][i+1]]);
-					geo.positions.push_back(vertlist[TriTable[cubeindex][i+2]]);
+					const vec3 a = vertlist[TriTable[cubeindex][i  ]];
+					const vec3 b = vertlist[TriTable[cubeindex][i+1]];
+					const vec3 c = vertlist[TriTable[cubeindex][i+2]];
+					geo.positions.push_back(a);
+					geo.positions.push_back(b);
+					geo.positions.push_back(c);
+					const vec3 n = normalize(cross(b - a, c - a));
+					geo.normals.push_back(n);
+					geo.normals.push_back(n);
+					geo.normals.push_back(n);
 					const int s = geo.positions.size();
-					geo.normals.push_back(vec3(0, 1, 0)); // TODO
-					geo.normals.push_back(vec3(0, 1, 0)); // TODO
-					geo.normals.push_back(vec3(0, 1, 0)); // TODO
 					geo.triangles.emplace_back(s - 3, s - 2, s - 1);
 				}
 			}
@@ -511,13 +515,17 @@ Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel)
 
 		// Create the triangle
 		for (int i = 0; TriTable[cubeindex][i] != -1; i += 3) {
-			geo.positions.push_back(vertlist[TriTable[cubeindex][i  ]]);
-			geo.positions.push_back(vertlist[TriTable[cubeindex][i+1]]);
-			geo.positions.push_back(vertlist[TriTable[cubeindex][i+2]]);
+			const vec3 a = vertlist[TriTable[cubeindex][i  ]];
+			const vec3 b = vertlist[TriTable[cubeindex][i+1]];
+			const vec3 c = vertlist[TriTable[cubeindex][i+2]];
+			geo.positions.push_back(a);
+			geo.positions.push_back(b);
+			geo.positions.push_back(c);
+			const vec3 n = normalize(cross(b - a, c - a));
+			geo.normals.push_back(n);
+			geo.normals.push_back(n);
+			geo.normals.push_back(n);
 			const int s = geo.positions.size();
-			geo.normals.push_back(normalize(geo.positions[s - 3] - gridCenter)); // TODO
-			geo.normals.push_back(normalize(geo.positions[s - 2] - gridCenter)); // TODO
-			geo.normals.push_back(normalize(geo.positions[s - 1] - gridCenter)); // TODO
 			geo.triangles.emplace_back(s - 3, s - 2, s - 1);
 		}
 	});
