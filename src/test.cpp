@@ -28,21 +28,25 @@ int main(int argc, char* argv[])
 	flipNormals(b);
 	writeObj(b, "flippedcube.obj");
 	
+	if (true)
 	{
-		const int s = 16;
-		const int m = 4;
+		const int s = 12;
+		const int m = 2;
 		VoxelGrid voxels(s, s, s);
 		box(voxels, {m, m, m}, {s-m, s-m, s-m});
 		Geometry voxelized = polygonize(voxels);
-		writeObj(voxelized, "voxels.obj");
+		writeObj(voxelized, "voxels_cube.obj");
+		voxelized = polygonizeSmooth(voxels);
+		writeObj(voxelized, "marching_cube.obj");
 	}
 
+	if (true)
 	{
 		FastNoise noise;
 		noise.SetNoiseType(FastNoise::Simplex);
-		noise.SetFrequency(20);
+		noise.SetFrequency(0.1f);
 
-		const int s = 32;
+		const int s = 16;
 		VoxelGrid voxels(s, s, s);
 		voxels.visit([&](int x, int y, int z) {
 			const float n = noise.GetNoise(x, y, z);
@@ -50,8 +54,9 @@ int main(int argc, char* argv[])
 		});
 		Geometry voxelized = polygonize(voxels);
 		writeObj(voxelized, "voxelnoise.obj");
+		voxelized = polygonizeSmooth(voxels);
+		writeObj(voxelized, "marching.obj");
 	}
-
 
 	return 0;
 }

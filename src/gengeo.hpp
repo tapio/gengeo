@@ -158,15 +158,18 @@ bool writeObj(const Geometry& geo, const char* filename = "out.obj");
 
 struct VoxelGrid
 {
-	typedef unsigned char cell_t;
+	typedef char cell_t;
 
 	VoxelGrid(int w, int d, int h): width(w), depth(d), height(h) {
 		cells.resize(w * d * h);
 	}
 
 	constexpr cell_t get(int x, int y, int z) const { return cells[cellIndex(x, y, z)]; }
-	constexpr void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
 	constexpr cell_t get(vec3 pos) const { return get(pos.x, pos.y, pos.z); }
+	constexpr cell_t getSafe(int x, int y, int z, cell_t def = cell_t()) const {
+		return (x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height) ? get(x, y, z) : def; }
+	constexpr cell_t getSafe(vec3 pos, cell_t def = cell_t()) const { return getSafe(pos.x, pos.y, pos.z, def); }
+	constexpr void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
 	constexpr void set(vec3 pos, const cell_t& cell) { set(pos.x, pos.y, pos.z, cell); }
 	constexpr int cellIndex(int x, int y, int z) const { return (z * width * depth) + (y * width) + x; }
 
@@ -213,5 +216,6 @@ struct VoxelGrid
 VoxelGrid& box(VoxelGrid& voxelGrid, vec3 start, vec3 end, VoxelGrid::cell_t cell = 1);
 Geometry polygonize(const VoxelGrid& voxelGrid);
 
+Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel = 0);
 
 } // namespace gengeo

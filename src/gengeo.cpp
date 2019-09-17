@@ -6,6 +6,8 @@
 
 namespace gengeo {
 
+#include "marchingcubes.h"
+
 static constexpr float PI = 3.1415926535f;
 static constexpr float TWOPI = 2 * PI;
 //static constexpr float PI2 = PI * 0.5f;
@@ -348,5 +350,100 @@ Geometry polygonize(const VoxelGrid& voxelGrid)
 	return geo;
 }
 
+
+// Linearly interpolate the position where an isosurface cuts
+// an edge between two vertices, each with their own scalar value
+static constexpr vec3 vertexInterp(float isolevel, vec3 p1, vec3 p2, float valp1, float valp2)
+{
+	if (abs(isolevel - valp1) < 0.0001f)
+		return p1;
+	if (abs(isolevel - valp2) < 0.0001f)
+		return p2;
+	if (abs(valp1 - valp2) < 0.0001f)
+		return p1;
+	float mu = (isolevel - valp1) / (valp2 - valp1);
+	return {
+		p1.x + mu * (p2.x - p1.x),
+		p1.y + mu * (p2.y - p1.y),
+		p1.z + mu * (p2.z - p1.z)
+	};
+}
+
+Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel)
+{
+	static constexpr vec3 offsets[8] = {
+		{-1,  1, -1},
+		{ 1,  1, -1},
+		{ 1, -1, -1},
+		{-1, -1, -1},
+		{-1,  1,  1},
+		{ 1,  1,  1},
+		{ 1, -1,  1},
+		{-1, -1,  1}
+	};
+	Geometry geo;
+	voxelGrid.visit([&voxelGrid, &geo, isolevel](int x, int y, int z, VoxelGrid::cell_t cell) {
+		// Determine the index into the edge table which
+		// tells us which vertices are inside of the surface
+		int cubeindex = 0;
+		float values[8];
+		vec3 points[8];
+		const vec3 gridCenter = vec3(voxelGrid.width, voxelGrid.depth, voxelGrid.height) * 0.5f;
+		const vec3 p = vec3(x, y, z);
+		//auto current = voxelGrid.getSafe(p);
+		for (int i = 0; i < 8; i++) {
+			points[i] = p + offsets[i] * 0.5f;
+			//auto corner = voxelGrid.getSafe(p + offsets[i]);
+			// TODO: This is actually just spehere, not using voxel info
+			values[i] = length(gridCenter - points[i]) - (gridCenter.x * 0.9f);
+			if (values[i] < isolevel)
+				cubeindex |= (1 << i);
+		}
+
+		// Cube is entirely in/out of the surface
+		if (EdgeTable[cubeindex] == 0)
+			return;
+
+		// Find the vertices where the surface intersects the cube
+		vec3 vertlist[12];
+		if (EdgeTable[cubeindex] & 1)
+			vertlist[0] = vertexInterp(isolevel, points[0], points[1], values[0], values[1]);
+		if (EdgeTable[cubeindex] & 2)
+			vertlist[1] = vertexInterp(isolevel, points[1], points[2], values[1], values[2]);
+		if (EdgeTable[cubeindex] & 4)
+			vertlist[2] = vertexInterp(isolevel, points[2], points[3], values[2], values[3]);
+		if (EdgeTable[cubeindex] & 8)
+			vertlist[3] = vertexInterp(isolevel, points[3], points[0], values[3], values[0]);
+		if (EdgeTable[cubeindex] & 16)
+			vertlist[4] = vertexInterp(isolevel, points[4], points[5], values[4], values[5]);
+		if (EdgeTable[cubeindex] & 32)
+			vertlist[5] = vertexInterp(isolevel, points[5], points[6], values[5], values[6]);
+		if (EdgeTable[cubeindex] & 64)
+			vertlist[6] = vertexInterp(isolevel, points[6], points[7], values[6], values[7]);
+		if (EdgeTable[cubeindex] & 128)
+			vertlist[7] = vertexInterp(isolevel, points[7], points[4], values[7], values[4]);
+		if (EdgeTable[cubeindex] & 256)
+			vertlist[8] = vertexInterp(isolevel, points[0], points[4], values[0], values[4]);
+		if (EdgeTable[cubeindex] & 512)
+			vertlist[9] = vertexInterp(isolevel, points[1], points[5], values[1], values[5]);
+		if (EdgeTable[cubeindex] & 1024)
+			vertlist[10] = vertexInterp(isolevel, points[2], points[6], values[2], values[6]);
+		if (EdgeTable[cubeindex] & 2048)
+			vertlist[11] = vertexInterp(isolevel, points[3], points[7], values[3], values[7]);
+
+		// Create the triangle
+		for (int i = 0; TriTable[cubeindex][i] != -1; i += 3) {
+			geo.positions.push_back(vertlist[TriTable[cubeindex][i  ]]);
+			geo.positions.push_back(vertlist[TriTable[cubeindex][i+1]]);
+			geo.positions.push_back(vertlist[TriTable[cubeindex][i+2]]);
+			const int s = geo.positions.size();
+			geo.normals.push_back(normalize(geo.positions[s - 3] - gridCenter)); // TODO
+			geo.normals.push_back(normalize(geo.positions[s - 2] - gridCenter)); // TODO
+			geo.normals.push_back(normalize(geo.positions[s - 1] - gridCenter)); // TODO
+			geo.triangles.emplace_back(s - 3, s - 2, s - 1);
+		}
+	});
+	return geo;
+}
 
 } // namespace gengeo
