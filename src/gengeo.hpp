@@ -9,6 +9,10 @@ typedef unsigned int uint;
 constexpr inline float abs(float a) { return a < 0 ? -a : a; }
 constexpr inline float min(float a, float b) { return a < b ? a : b; }
 constexpr inline float max(float a, float b) { return a > b ? a : b; }
+constexpr inline float clamp(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); }
+constexpr inline float saturate(float x) { return clamp(x, 0, 1); }
+constexpr inline float lerp(float a, float b, float t) { return a + t * (b - a); }
+constexpr inline float sign(float x) { return x > 0 ? 1 : (x < 0 ? -1 : 0); }
 
 struct vec2
 {
@@ -79,6 +83,9 @@ inline           vec2 normalize(const vec2& v) { float l = 1.f / length(v); retu
 inline constexpr vec2 abs(const vec2& v) { return { abs(v.x), abs(v.y) }; }
 inline constexpr vec2 min(const vec2& lhs, const vec2& rhs) { return { min(lhs.x, rhs.x), min(lhs.y, rhs.y) }; }
 inline constexpr vec2 max(const vec2& lhs, const vec2& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y) }; }
+inline constexpr float min(const vec2& v) { return min(v.x, v.y); }
+inline constexpr float max(const vec2& v) { return max(v.x, v.y); }
+inline constexpr vec2 lerp(const vec2& a, const vec2& b, float t) { return a + (b - a) * t; }
 
 inline constexpr vec3 cross(const vec3& lhs, const vec3& rhs) { return { lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x }; }
 inline constexpr float dot(const vec3& lhs, const vec3& rhs) { return lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z; }
@@ -90,6 +97,10 @@ inline           vec3 normalize(const vec3& v) { float l = 1.f / length(v); retu
 inline constexpr vec3 abs(const vec3& v) { return { abs(v.x), abs(v.y), abs(v.z) }; }
 inline constexpr vec3 min(const vec3& lhs, const vec3& rhs) { return { min(lhs.x, rhs.x), min(lhs.y, rhs.y), min(lhs.z, rhs.z) }; }
 inline constexpr vec3 max(const vec3& lhs, const vec3& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y), max(lhs.z, rhs.z) }; }
+inline constexpr float min(const vec3& v) { return min(v.x, min(v.y, v.z)); }
+inline constexpr float max(const vec3& v) { return max(v.x, max(v.y, v.z)); }
+inline constexpr vec3 lerp(const vec3& a, const vec3& b, float t) { return a + (b - a) * t; }
+
 
 
 struct TriFace
@@ -154,6 +165,81 @@ Geometry& normalizeNormals(Geometry& geo);
 Geometry& flipNormals(Geometry& geo);
 
 bool writeObj(const Geometry& geo, const char* filename = "out.obj");
+
+
+namespace sdf {
+
+	inline float sphere(vec3 p, float r) {
+		return length(p) - r;
+	}
+	inline float box(vec3 p, vec3 b) {
+		vec3 d = abs(p) - b;
+		return length(max(d, vec3(0.0f))) + min(max(d), 0.0f);
+	}
+	inline constexpr float plane(vec3 p, vec3 n, float d) {
+		return dot(p, n) + d; // n must be normalized
+	}
+	inline float capsule(vec3 p, vec3 a, vec3 b, float r) {
+		vec3 pa = p - a, ba = b - a;
+		float h = saturate(dot(pa, ba) / dot(ba, ba));
+		return length(pa - ba * h) - r;
+	}
+	inline float capsulex(vec3 p, float h, float r) {
+		p.x -= clamp(p.x, 0.0, h);
+		return length(p) - r;
+	}
+	inline float capsuley(vec3 p, float h, float r) {
+		p.y -= clamp(p.y, 0.0, h);
+		return length(p) - r;
+	}
+	inline float capsulez(vec3 p, float h, float r) {
+		p.z -= clamp(p.z, 0.0, h);
+		return length(p) - r;
+	}
+	inline float cylinder(vec3 p, vec3 a, vec3 b, float r) {
+		vec3  ba = b - a;
+		vec3  pa = p - a;
+		float baba = dot(ba, ba);
+		float paba = dot(pa, ba);
+		float x = length(pa * baba - ba * paba) - r * baba;
+		float y = abs(paba - baba * 0.5f) - baba * 0.5f;
+		float x2 = x * x;
+		float y2 = y * y * baba;
+		float d = (max(x, y) < 0.0f) ? -min(x2, y2): (((x > 0.0f) ? x2 : 0.0f) + ((y > 0.0f) ? y2 : 0.0f));
+		return sign(d) * sqrt(abs(d)) / baba;
+	}
+	inline float cylinderx(vec3 p, float h, float r) {
+		vec2 d = abs(vec2(length(vec2(p.y, p.z)), p.x)) - vec2(h, r);
+		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+	}
+	inline float cylindery(vec3 p, float h, float r) {
+		vec2 d = abs(vec2(length(vec2(p.x, p.z)), p.y)) - vec2(h, r);
+		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+	}
+	inline float cylinderz(vec3 p, float h, float r) {
+		vec2 d = abs(vec2(length(vec2(p.x, p.y)), p.z)) - vec2(h, r);
+		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+	}
+
+
+	inline constexpr float opRound(float sdf, float r) { return sdf - r; }
+	inline constexpr float opUnion(float a, float b) { return min(a, b); }
+	inline constexpr float opSubtract(float a, float b) { return max(a, -b); }
+	inline constexpr float opIntersect(float a, float b) { return max(a, b); }
+	inline constexpr float opSmoothUnion(float a, float b, float k) {
+		const float h = saturate(0.5 + 0.5 * (b - a) / k);
+		return lerp(b, a, h) - k * h * (1.0 - h);
+	}
+	inline constexpr float opSmoothSubtraction(float a, float b, float k) {
+		const float h = saturate(0.5 - 0.5 * (b + a) / k);
+		return lerp(-b, a, h) + k * h * (1.0 - h);
+	}
+	inline constexpr float opSmoothIntersection(float a, float b, float k) {
+		const float h = saturate(0.5 - 0.5 * (b - a) / k);
+		return lerp(b, a, h) + k * h * (1.0 - h);
+	}
+
+} // namespace sdf
 
 
 struct VoxelGrid
