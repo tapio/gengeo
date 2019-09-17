@@ -251,26 +251,26 @@ struct VoxelGrid
 {
 	typedef char cell_t;
 
-	VoxelGrid(int w, int d, int h): width(w), depth(d), height(h) {
-		cells.resize(w * d * h);
+	VoxelGrid(int xsize, int ysize, int zsize): xsize(xsize), ysize(ysize), zsize(zsize) {
+		cells.resize(xsize * ysize * zsize);
 	}
 
 	cell_t get(int x, int y, int z) const { return cells[cellIndex(x, y, z)]; }
 	cell_t get(vec3 pos) const { return get(pos.x, pos.y, pos.z); }
 	cell_t getSafe(int x, int y, int z, cell_t def = cell_t()) const {
-		return (x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height) ? get(x, y, z) : def; }
+		return (x >= 0 && x < xsize && y >= 0 && y < ysize && z >= 0 && z < zsize) ? get(x, y, z) : def; }
 	cell_t getSafe(vec3 pos, cell_t def = cell_t()) const { return getSafe(pos.x, pos.y, pos.z, def); }
 	
 	void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
 	void set(vec3 pos, const cell_t& cell) { set(pos.x, pos.y, pos.z, cell); }
 	
-	int cellIndex(int x, int y, int z) const { return (z * width * depth) + (y * width) + x; }
+	int cellIndex(int x, int y, int z) const { return (z * xsize * ysize) + (y * xsize) + x; }
 
 	template<typename VisitFunc>
 	void visit(VisitFunc visitFunc) const {
-		for (int k = 0; k < height; ++k) {
-			for (int j = 0; j < depth; ++j) {
-				for (int i = 0; i < width; ++i) {
+		for (int k = 0; k < zsize; ++k) {
+			for (int j = 0; j < ysize; ++j) {
+				for (int i = 0; i < xsize; ++i) {
 					visitFunc(i, j, k, get(i, j, k));
 				}
 			}
@@ -279,9 +279,9 @@ struct VoxelGrid
 
 	template<typename VisitFunc>
 	void visit(VisitFunc visitFunc) {
-		for (int k = 0; k < height; ++k) {
-			for (int j = 0; j < depth; ++j) {
-				for (int i = 0; i < width; ++i) {
+		for (int k = 0; k < zsize; ++k) {
+			for (int j = 0; j < ysize; ++j) {
+				for (int i = 0; i < xsize; ++i) {
 					set(i, j, k, visitFunc(i, j, k));
 				}
 			}
@@ -299,9 +299,9 @@ struct VoxelGrid
 		}
 	}
 
-	int width = 0;
-	int depth = 0;
-	int height = 0;
+	int xsize = 0;
+	int ysize = 0;
+	int zsize = 0;
 
 	std::vector<cell_t> cells;
 };

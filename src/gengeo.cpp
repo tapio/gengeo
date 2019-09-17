@@ -466,7 +466,7 @@ Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel)
 		int cubeindex = 0;
 		float values[8];
 		vec3 points[8];
-		const vec3 gridCenter = vec3(voxelGrid.width, voxelGrid.depth, voxelGrid.height) * 0.5f;
+		const vec3 gridCenter = vec3(voxelGrid.xsize, voxelGrid.ysize, voxelGrid.zsize) * 0.5f;
 		const vec3 p = vec3(x, y, z);
 		//auto current = voxelGrid.getSafe(p);
 		for (int i = 0; i < 8; i++) {
