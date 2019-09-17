@@ -164,17 +164,19 @@ struct VoxelGrid
 		cells.resize(w * d * h);
 	}
 
-	constexpr cell_t get(int x, int y, int z) const { return cells[cellIndex(x, y, z)]; }
-	constexpr cell_t get(vec3 pos) const { return get(pos.x, pos.y, pos.z); }
-	constexpr cell_t getSafe(int x, int y, int z, cell_t def = cell_t()) const {
+	cell_t get(int x, int y, int z) const { return cells[cellIndex(x, y, z)]; }
+	cell_t get(vec3 pos) const { return get(pos.x, pos.y, pos.z); }
+	cell_t getSafe(int x, int y, int z, cell_t def = cell_t()) const {
 		return (x >= 0 && x < width && y >= 0 && y < depth && z >= 0 && z < height) ? get(x, y, z) : def; }
-	constexpr cell_t getSafe(vec3 pos, cell_t def = cell_t()) const { return getSafe(pos.x, pos.y, pos.z, def); }
-	constexpr void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
-	constexpr void set(vec3 pos, const cell_t& cell) { set(pos.x, pos.y, pos.z, cell); }
-	constexpr int cellIndex(int x, int y, int z) const { return (z * width * depth) + (y * width) + x; }
+	cell_t getSafe(vec3 pos, cell_t def = cell_t()) const { return getSafe(pos.x, pos.y, pos.z, def); }
+	
+	void set(int x, int y, int z, const cell_t& cell) { cells[cellIndex(x, y, z)] = cell; }
+	void set(vec3 pos, const cell_t& cell) { set(pos.x, pos.y, pos.z, cell); }
+	
+	int cellIndex(int x, int y, int z) const { return (z * width * depth) + (y * width) + x; }
 
 	template<typename VisitFunc>
-	constexpr void visit(VisitFunc visitFunc) const {
+	void visit(VisitFunc visitFunc) const {
 		for (int k = 0; k < height; ++k) {
 			for (int j = 0; j < depth; ++j) {
 				for (int i = 0; i < width; ++i) {
@@ -185,7 +187,7 @@ struct VoxelGrid
 	}
 
 	template<typename VisitFunc>
-	constexpr void visit(VisitFunc visitFunc) {
+	void visit(VisitFunc visitFunc) {
 		for (int k = 0; k < height; ++k) {
 			for (int j = 0; j < depth; ++j) {
 				for (int i = 0; i < width; ++i) {
@@ -196,7 +198,7 @@ struct VoxelGrid
 	}
 
 	template<typename VisitFunc>
-	constexpr void visit(vec3 start, vec3 end, VisitFunc visitFunc) {
+	void visit(vec3 start, vec3 end, VisitFunc visitFunc) {
 		for (int k = start.z; k < end.z; ++k) {
 			for (int j = start.y; j < end.y; ++j) {
 				for (int i = start.x; i < end.x; ++i) {
