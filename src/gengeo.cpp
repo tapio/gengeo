@@ -3,6 +3,9 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <ctime>
+#include <random>
+#include <unordered_map>
 
 namespace gengeo {
 
@@ -12,6 +15,8 @@ static constexpr float PI = 3.1415926535f;
 static constexpr float TWOPI = 2 * PI;
 //static constexpr float PI2 = PI * 0.5f;
 //static constexpr float PI4 = PI * 0.25f;
+static constexpr float DEG_TO_RAD = PI / 180.f;
+//static constexpr float RAD_TO_DEG = 180.f / PI;
 
 Geometry cube()
 {
@@ -52,10 +57,10 @@ Geometry cube()
 		geo.positions.emplace_back(verts[quads[i].b]);
 		geo.positions.emplace_back(verts[quads[i].c]);
 		geo.positions.emplace_back(verts[quads[i].d]);
-		geo.texcoords.emplace_back(0, 0);
-		geo.texcoords.emplace_back(1, 0);
-		geo.texcoords.emplace_back(1, 1);
-		geo.texcoords.emplace_back(0, 1);
+		geo.texcoords.emplace_back(0.f, 0.f);
+		geo.texcoords.emplace_back(1.f, 0.f);
+		geo.texcoords.emplace_back(1.f, 1.f);
+		geo.texcoords.emplace_back(0.f, 1.f);
 		geo.normals.emplace_back(normals[i]);
 		geo.normals.emplace_back(normals[i]);
 		geo.normals.emplace_back(normals[i]);
@@ -67,7 +72,7 @@ Geometry cube()
 Geometry sphere(int subdivs)
 {
 	Geometry geo = cube();
-	subdivide(scale(geo, 2), subdivs);
+	subdivide(scale(geo, 2.f), subdivs);
 	for (uint i = 0; i < geo.positions.size(); ++i) {
 		vec3& pos = geo.positions[i];
 		float x = pos.x, y = pos.y, z = pos.z;
@@ -91,7 +96,7 @@ Geometry circley(int points)
 	geo.texcoords.reserve(total);
 	geo.normals.reserve(total);
 	geo.triangles.reserve(points);
-	geo.positions.emplace_back(0, 0, 0);
+	geo.positions.emplace_back(0.f, 0.f, 0.f);
 	geo.texcoords.emplace_back(0.5f, 0.5f);
 	float angleStep = TWOPI / points;
 	for (int i = 0; i < points; i++) {
@@ -100,7 +105,7 @@ Geometry circley(int points)
 		float y = std::sin(i * angleStep);
 		float u = (x + 1) * 0.5f;
 		float v = 1.0f - ((y + 1) * 0.5f);
-		geo.positions.emplace_back(x, 0, y);
+		geo.positions.emplace_back(x, 0.f, y);
 		geo.texcoords.emplace_back(u, v);
 	}
 	geo.normals.assign(total, {0, 1, 0});
@@ -115,11 +120,11 @@ Geometry planexy()
 	geo.positions.emplace_back( 0.5f, -0.5f, 0.f);
 	geo.positions.emplace_back( 0.5f,  0.5f, 0.f);
 	geo.positions.emplace_back(-0.5f,  0.5f, 0.f);
-	geo.texcoords.emplace_back(0, 0);
-	geo.texcoords.emplace_back(1, 0);
-	geo.texcoords.emplace_back(1, 1);
-	geo.texcoords.emplace_back(0, 1);
-	geo.normals.assign(4, {0, 0, 1});
+	geo.texcoords.emplace_back(0.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 1.f);
+	geo.texcoords.emplace_back(0.f, 1.f);
+	geo.normals.assign(4, { 0.f, 0.f, 1.f });
 	return geo;
 }
 
@@ -131,11 +136,11 @@ Geometry planexz()
 	geo.positions.emplace_back( 0.5f, 0.f,  0.5f);
 	geo.positions.emplace_back( 0.5f, 0.f, -0.5f);
 	geo.positions.emplace_back(-0.5f, 0.f, -0.5f);
-	geo.texcoords.emplace_back(0, 0);
-	geo.texcoords.emplace_back(1, 0);
-	geo.texcoords.emplace_back(1, 1);
-	geo.texcoords.emplace_back(0, 1);
-	geo.normals.assign(4, {0, 1, 0});
+	geo.texcoords.emplace_back(0.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 1.f);
+	geo.texcoords.emplace_back(0.f, 1.f);
+	geo.normals.assign(4, { 0.f, 1.f, 0.f });
 	return geo;
 }
 
@@ -147,19 +152,48 @@ Geometry planeyz()
 	geo.positions.emplace_back(0.f, -0.5f, -0.5f);
 	geo.positions.emplace_back(0.f,  0.5f, -0.5f);
 	geo.positions.emplace_back(0.f,  0.5f,  0.5f);
-	geo.texcoords.emplace_back(0, 0);
-	geo.texcoords.emplace_back(1, 0);
-	geo.texcoords.emplace_back(1, 1);
-	geo.texcoords.emplace_back(0, 1);
-	geo.normals.assign(4, {1, 0, 0});
+	geo.texcoords.emplace_back(0.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 0.f);
+	geo.texcoords.emplace_back(1.f, 1.f);
+	geo.texcoords.emplace_back(0.f, 1.f);
+	geo.normals.assign(4, { 1.f, 0.f, 0.f });
 	return geo;
 }
 
-vec3 extents(const Geometry& geo)
+Geometry heightmap(float* heights, int w, int h, vec3 scale)
 {
-	vec3 lower, upper;
-	bounds(geo, lower, upper);
-	return upper - lower;
+	int numVerts = w * h;
+	int lasti = w - 1;
+	int lastj = h - 1;
+	Geometry geo;
+	geo.positions.resize(numVerts);
+	geo.texcoords.resize(numVerts);
+	geo.normals.resize(numVerts);
+	geo.quads.reserve(numVerts);
+	for (int j = 0; j < h; ++j) {
+		for (int i = 0; i < w; ++i) {
+			// Create the vertex
+			float x = i - w * 0.5f;
+			float z = j - h * 0.5f;
+			float y = heights[j * w + i];
+			int vert = j * w + i;
+			geo.positions[vert] = vec3(x, y, z) * scale;
+			geo.texcoords[vert] = vec2((float)i / lasti, (float)j / lastj);
+			geo.normals[vert] = vec3(0, 1, 0);
+			// Indexed faces
+			if (i == lasti || j == lastj)
+				continue;
+			uint a = i + w * j;
+			uint b = i + w * (j + 1);
+			uint c = (i + 1) + w * (j + 1);
+			uint d = (i + 1) + w * j;
+			//uint triangles[] = { a, b, d, b, c, d };
+			//geo.triangles.insert(geo.triangles.end(), triangles, triangles + 6);
+			geo.quads.push_back({ a, b, c, d });
+		}
+	}
+	calculateNormals(geo);
+	return geo;
 }
 
 void bounds(const Geometry& geo, vec3& lower, vec3& upper)
@@ -172,6 +206,21 @@ void bounds(const Geometry& geo, vec3& lower, vec3& upper)
 	}
 	lower = lbound;
 	upper = ubound;
+}
+
+Bounds bounds(const Geometry& geo)
+{
+	Bounds b;
+	bounds(geo, b.min, b.max);
+	return b;
+}
+
+float boundingSphere(const Geometry& geo)
+{
+	float maxRadiusSq = 0;
+	for (auto pos : geo.positions)
+		maxRadiusSq = max(maxRadiusSq, length2(pos));
+	return std::sqrt(maxRadiusSq);
 }
 
 Geometry& scale(Geometry& geo, vec3 s)
@@ -251,6 +300,56 @@ Geometry& subdivide(Geometry& geo, int amount)
 		geo = std::move(subdivided);
 		normalizeNormals(geo);
 	}
+	return weld(geo);
+}
+
+static void copyVertex(Geometry& dst, Geometry& src, uint srcIndex)
+{
+	dst.positions.emplace_back(src.positions[srcIndex]);
+	if (srcIndex < src.texcoords.size())
+		dst.texcoords.emplace_back(src.texcoords[srcIndex]);
+	if (srcIndex < src.normals.size())
+		dst.normals.emplace_back(src.normals[srcIndex]);
+}
+
+Geometry& weld(Geometry& geo, float maxNormalAngleDeg, double tolerance)
+{
+	// Round to tolerance
+	for (auto& pos : geo.positions) {
+		pos.x = (float)(std::round((double)pos.x / tolerance) * tolerance);
+		pos.y = (float)(std::round((double)pos.y / tolerance) * tolerance);
+		pos.z = (float)(std::round((double)pos.z / tolerance) * tolerance);
+	}
+	float cosTheta = std::cos(maxNormalAngleDeg * DEG_TO_RAD);
+	std::unordered_map<vec3, uint> hashmap;
+	Geometry welded;
+	welded.positions.reserve(geo.positions.size());
+	welded.texcoords.reserve(geo.texcoords.size());
+	welded.normals.reserve(geo.normals.size());
+
+	auto handleVertex = [&, cosTheta](uint oldIndex) {
+		uint toCreateIndex = welded.positions.size();
+		uint newIndex = hashmap.try_emplace(geo.positions[oldIndex], toCreateIndex).first->second;
+		if (newIndex < toCreateIndex && !geo.normals.empty() && dot(geo.normals[oldIndex], welded.normals[newIndex]) < cosTheta)
+			newIndex = toCreateIndex;
+		if (newIndex == toCreateIndex)
+			copyVertex(welded, geo, oldIndex);
+		return newIndex;
+	};
+
+	if (!geo.triangles.empty()) {
+		for (TriFace oldFace : geo.triangles) {
+			TriFace newFace(handleVertex(oldFace.a), handleVertex(oldFace.b), handleVertex(oldFace.c));
+			welded.triangles.emplace_back(newFace);
+		}
+	} else {
+		for (QuadFace oldFace : geo.quads) {
+			QuadFace newFace(handleVertex(oldFace.a), handleVertex(oldFace.b), handleVertex(oldFace.c), handleVertex(oldFace.d));
+			welded.quads.emplace_back(newFace);
+		}
+	}
+
+	geo = std::move(welded);
 	return geo;
 }
 
@@ -263,7 +362,73 @@ Geometry& triangulate(Geometry& geo)
 			geo.triangles.emplace_back(face.a, face.b, face.c);
 			geo.triangles.emplace_back(face.c, face.d, face.a);
 		}
+		geo.quads.clear();
 	}
+	return geo;
+}
+
+Geometry& displaceAlongNormals(Geometry& geo, float minAmount, float maxAmount, int seed)
+{
+	weld(geo, 180);  // Need to weld everything to avoid cracks...
+	if (geo.normals.empty())
+		calculateNormals(geo);
+	auto rand = std::bind(std::uniform_real_distribution<float>(0, 1), std::mt19937(seed ? seed : std::time(0)));
+	auto& pos = geo.positions;
+	auto& n = geo.normals;
+	for (uint i = 0; i < pos.size(); i++)
+		pos[i] += n[i] * lerp(minAmount, maxAmount, rand());
+	return calculateNormals(geo);
+}
+
+static constexpr float sampleTexture(vec2 uv, float* tex, int w, int h)
+{
+	int x = int(uv.x * (w - 1)) % w;
+	int y = int(uv.y * (h - 1)) % h;
+	return tex[w * y + x];
+}
+
+Geometry& displacementMap(Geometry& geo, float* displacementTexture, int w, int h, float height)
+{
+	if (geo.texcoords.empty())
+		return geo;
+	weld(geo, 180);  // Need to weld everything to avoid cracks...
+	if (geo.normals.empty())
+		calculateNormals(geo);
+	auto& pos = geo.positions;
+	auto& uv = geo.texcoords;
+	auto& n = geo.normals;
+	for (uint i = 0; i < pos.size(); i++)
+		pos[i] += n[i] * sampleTexture(uv[i], displacementTexture, w, h) * height;
+	return calculateNormals(geo);
+}
+
+Geometry& calculateNormals(Geometry& geo)
+{
+	auto& triangles = geo.triangles;
+	auto& quads = geo.quads;
+	auto& positions = geo.positions;
+	auto& normals = geo.normals;
+	if (!triangles.empty()) {
+		normals.clear();
+		normals.resize(positions.size());
+		for (auto tri : triangles) {
+			vec3 normal = triangleNormal(positions[tri.a], positions[tri.b], positions[tri.c]);
+			normals[tri.a] += normal;
+			normals[tri.b] += normal;
+			normals[tri.c] += normal;
+		}
+	} else if (!quads.empty()) {
+		normals.clear();
+		normals.resize(positions.size());
+		for (auto quad : quads) {
+			vec3 normal = triangleNormal(positions[quad.a], positions[quad.b], positions[quad.c]);
+			normals[quad.a] += normal;
+			normals[quad.b] += normal;
+			normals[quad.c] += normal;
+			normals[quad.d] += normal;
+		}
+	}
+	normalizeNormals(geo);
 	return geo;
 }
 

@@ -11,9 +11,9 @@ constexpr inline float abs(float a) { return a < 0 ? -a : a; }
 constexpr inline float min(float a, float b) { return a < b ? a : b; }
 constexpr inline float max(float a, float b) { return a > b ? a : b; }
 constexpr inline float clamp(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); }
-constexpr inline float saturate(float x) { return clamp(x, 0, 1); }
-constexpr inline float lerp(float a, float b, float t) { return a + t * (b - a); }
-constexpr inline float sign(float x) { return x > 0 ? 1 : (x < 0 ? -1 : 0); }
+constexpr inline float saturate(float x) { return clamp(x, 0.f, 1.f); }
+constexpr inline float lerp(float a, float b, float t) { return a + (b - a) * t; }
+constexpr inline float sign(float x) { return x > 0.f ? 1.f : (x < 0.f ? -1.f : 0.f); }
 
 struct vec2
 {
@@ -40,6 +40,9 @@ struct vec2
 	constexpr vec2& operator/=(const vec2& rhs) { x /= rhs.x; y /= rhs.y; return *this; }
 	constexpr vec2& operator*=(float rhs) { x *= rhs; y *= rhs; return *this; }
 	constexpr vec2& operator/=(float rhs) { x /= rhs; y /= rhs; return *this; }
+
+	constexpr bool operator==(const vec2& rhs) const { return x == rhs.x && y == rhs.y; }
+	constexpr bool operator!=(const vec2& rhs) const { return !(*this == rhs); }
 
 	constexpr vec2& operator-() { x = -x; y = -y; return *this; }
 	constexpr float operator[](int index) { return v[index]; }
@@ -71,6 +74,9 @@ struct vec3
 	constexpr vec3& operator*=(float rhs) { x *= rhs; y *= rhs; z *= rhs; return *this; }
 	constexpr vec3& operator/=(float rhs) { x /= rhs; y /= rhs; z /= rhs; return *this; }
 
+	constexpr bool operator==(const vec3& rhs) const { return x == rhs.x && y == rhs.y && z == rhs.z; }
+	constexpr bool operator!=(const vec3& rhs) const { return !(*this == rhs); }
+
 	constexpr vec3& operator-() { x = -x; y = -y; z = -z; return *this; }
 	constexpr float operator[](int index) { return v[index]; }
 };
@@ -86,6 +92,7 @@ inline constexpr vec2 min(const vec2& lhs, const vec2& rhs) { return { min(lhs.x
 inline constexpr vec2 max(const vec2& lhs, const vec2& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y) }; }
 inline constexpr float min(const vec2& v) { return min(v.x, v.y); }
 inline constexpr float max(const vec2& v) { return max(v.x, v.y); }
+inline constexpr vec2 clamp(const vec2& v, const vec2& lo, const vec2& hi) { return { clamp(v.x, lo.x, hi.x), clamp(v.y, lo.y, hi.y) }; }
 inline constexpr vec2 lerp(const vec2& a, const vec2& b, float t) { return a + (b - a) * t; }
 
 inline constexpr vec3 cross(const vec3& lhs, const vec3& rhs) { return { lhs.y * rhs.z - lhs.z * rhs.y, lhs.z * rhs.x - lhs.x * rhs.z, lhs.x * rhs.y - lhs.y * rhs.x }; }
@@ -100,8 +107,22 @@ inline constexpr vec3 min(const vec3& lhs, const vec3& rhs) { return { min(lhs.x
 inline constexpr vec3 max(const vec3& lhs, const vec3& rhs) { return { max(lhs.x, rhs.x), max(lhs.y, rhs.y), max(lhs.z, rhs.z) }; }
 inline constexpr float min(const vec3& v) { return min(v.x, min(v.y, v.z)); }
 inline constexpr float max(const vec3& v) { return max(v.x, max(v.y, v.z)); }
+inline constexpr vec3 clamp(const vec3& v, const vec3& lo, const vec3& hi) { return { clamp(v.x, lo.x, hi.x), clamp(v.y, lo.y, hi.y), clamp(v.z, lo.z, hi.z) }; }
 inline constexpr vec3 lerp(const vec3& a, const vec3& b, float t) { return a + (b - a) * t; }
+inline           vec3 triangleNormal(const vec3& a, const vec3& b, const vec3& c) { return normalize(cross(b - a, c - a)); }
 
+struct Bounds {
+	vec3 min;
+	vec3 max;
+
+	constexpr vec3 center() const { return (min + max) * 0.5f; }
+	constexpr vec3 size() const { return max - min; }
+	constexpr vec3 extents() const { return (max - min) * 0.5f; }
+	constexpr Bounds& expand(const vec3& amount ) { min -= amount; max += amount; return *this; }
+	constexpr bool contains(const vec3& p) const {
+		return min.x <= p.x && min.y <= p.y && min.z <= p.y && max.x >= p.x && max.y >= p.y && max.z >= p.z;
+	}
+};
 
 
 struct TriFace
@@ -127,8 +148,9 @@ struct Geometry
 	std::vector<vec3> normals;
 };
 
-vec3 extents(const Geometry& geo);
 void bounds(const Geometry& geo, vec3& lower, vec3& upper);
+Bounds bounds(const Geometry& geo);
+float boundingSphere(const Geometry& geo);
 
 Geometry& scale(Geometry& geo, vec3 s);
 Geometry& translate(Geometry& geo, vec3 v);
@@ -160,8 +182,14 @@ inline Geometry planex() { return planeyz(); }
 inline Geometry planey() { return planexz(); }
 inline Geometry planez() { return planexy(); }
 
+Geometry heightmap(float* heights, int w, int h, vec3 scale = vec3(1));
+
 Geometry& subdivide(Geometry& geo, int amount = 1);
+Geometry& weld(Geometry& geo, float maxNormalAngleDeg = 30.f, double tolerance = 0.0001);
 Geometry& triangulate(Geometry& geo);
+Geometry& displaceAlongNormals(Geometry& geo, float minAmount, float maxAmount, int seed = 0);
+Geometry& displacementMap(Geometry& geo, float* displacementTexture, int w, int h, float height = 1.0f);
+Geometry& calculateNormals(Geometry& geo);
 Geometry& normalizeNormals(Geometry& geo);
 Geometry& flipNormals(Geometry& geo);
 
@@ -186,15 +214,15 @@ namespace sdf {
 		return length(pa - ba * h) - r;
 	}
 	inline float capsulex(vec3 p, float h, float r) {
-		p.x -= clamp(p.x, 0.0, h);
+		p.x -= clamp(p.x, 0.0f, h);
 		return length(p) - r;
 	}
 	inline float capsuley(vec3 p, float h, float r) {
-		p.y -= clamp(p.y, 0.0, h);
+		p.y -= clamp(p.y, 0.0f, h);
 		return length(p) - r;
 	}
 	inline float capsulez(vec3 p, float h, float r) {
-		p.z -= clamp(p.z, 0.0, h);
+		p.z -= clamp(p.z, 0.0f, h);
 		return length(p) - r;
 	}
 	inline float cylinder(vec3 p, vec3 a, vec3 b, float r) {
@@ -211,15 +239,15 @@ namespace sdf {
 	}
 	inline float cylinderx(vec3 p, float h, float r) {
 		vec2 d = abs(vec2(length(vec2(p.y, p.z)), p.x)) - vec2(h, r);
-		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+		return min(max(d.x, d.y), 0.0f) + length(max(d, 0.0f));
 	}
 	inline float cylindery(vec3 p, float h, float r) {
 		vec2 d = abs(vec2(length(vec2(p.x, p.z)), p.y)) - vec2(h, r);
-		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+		return min(max(d.x, d.y), 0.0f) + length(max(d, 0.0f));
 	}
 	inline float cylinderz(vec3 p, float h, float r) {
 		vec2 d = abs(vec2(length(vec2(p.x, p.y)), p.z)) - vec2(h, r);
-		return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+		return min(max(d.x, d.y), 0.0f) + length(max(d, 0.0f));
 	}
 
 
@@ -228,16 +256,16 @@ namespace sdf {
 	inline constexpr float opSubtract(float a, float b) { return max(a, -b); }
 	inline constexpr float opIntersect(float a, float b) { return max(a, b); }
 	inline constexpr float opSmoothUnion(float a, float b, float k) {
-		const float h = saturate(0.5 + 0.5 * (b - a) / k);
-		return lerp(b, a, h) - k * h * (1.0 - h);
+		const float h = saturate(0.5f + 0.5f * (b - a) / k);
+		return lerp(b, a, h) - k * h * (1.0f - h);
 	}
 	inline constexpr float opSmoothSubtraction(float a, float b, float k) {
-		const float h = saturate(0.5 - 0.5 * (b + a) / k);
-		return lerp(-b, a, h) + k * h * (1.0 - h);
+		const float h = saturate(0.5f - 0.5f * (b + a) / k);
+		return lerp(-b, a, h) + k * h * (1.0f - h);
 	}
 	inline constexpr float opSmoothIntersection(float a, float b, float k) {
-		const float h = saturate(0.5 - 0.5 * (b - a) / k);
-		return lerp(b, a, h) + k * h * (1.0 - h);
+		const float h = saturate(0.5f - 0.5f * (b - a) / k);
+		return lerp(b, a, h) + k * h * (1.0f - h);
 	}
 
 } // namespace sdf
@@ -311,4 +339,30 @@ Geometry polygonize(const VoxelGrid& voxelGrid);
 
 Geometry polygonizeSmooth(const VoxelGrid& voxelGrid, float isolevel = 0);
 
+inline void hash_combine(std::size_t& seed, std::size_t v) {
+	seed ^= v + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
+
 } // namespace gengeo
+
+namespace std {
+	template<> struct hash<gengeo::vec2> {
+		size_t operator()(const gengeo::vec2& v) const {
+			size_t seed = 34598591;
+			std::hash<float> hasher;
+			gengeo::hash_combine(seed, hasher(v.x));
+			gengeo::hash_combine(seed, hasher(v.y));
+			return seed;
+		}
+	};
+	template<> struct hash<gengeo::vec3> {
+		size_t operator()(const gengeo::vec3& v) const {
+			size_t seed = 81527137;
+			std::hash<float> hasher;
+			gengeo::hash_combine(seed, hasher(v.x));
+			gengeo::hash_combine(seed, hasher(v.y));
+			gengeo::hash_combine(seed, hasher(v.z));
+			return seed;
+		}
+	};
+}
