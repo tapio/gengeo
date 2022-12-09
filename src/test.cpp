@@ -1,5 +1,5 @@
 #include "gengeo.hpp"
-#include "../FastNoise/FastNoise.h"
+#include "../third-party/FastNoise/FastNoise.h"
 
 using namespace gengeo;
 
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 	if (true)
 	{
 		const int s = 12;
-		Geometry polygonized = polygonize(vec3(-s), vec3(s), vec3(0.25f), [](vec3 pos) {
+		Geometry polygonized = sdf::polygonize(vec3(-s), vec3(s), vec3(0.25f), [s](vec3 pos) {
 			float b = sdf::box(pos, vec3(s * 0.6f, s * 0.2f, s * 0.5f));
 			float c = sdf::sphere(pos, s * 0.4f);
 			return sdf::opUnion(b, c);
